@@ -1,0 +1,12 @@
+node_modules
+dist
+.wrangler
+pnpm-lock.yaml
+# Vendored submodules are third-party sources and must not be reformatted.
+native/third_party
+native/build
+apps/web/public/wasm
+apps/web/src/routeTree.gen.ts
+apps/web/src/paraglide
+apps/web/project.inlang
+apps/web/messages

@@ -1,0 +1,41 @@
+packages:
+  - apps/*
+
+# pnpm 12 refuses to install packages published within the last day
+# (`minimumReleaseAge`, default 1440 minutes). These are the freshly published
+# versions this project intentionally pins; prune entries as they age out.
+minimumReleaseAgeExclude:
+  - "@cloudflare/workerd-darwin-64@1.20261103.1"
+  - "@cloudflare/workerd-darwin-arm64@1.20261103.1"
+  - "@cloudflare/workerd-linux-64@1.20261103.1"
+  - "@cloudflare/workerd-linux-arm64@1.20261103.1"
+  - "@cloudflare/workerd-windows-64@1.20261103.1"
+  - "@inlang/paraglide-js@3.0.0"
+  - "@inlang/plugin-message-format@4.5.7"
+  - "@inlang/sdk@4.1.1"
+  - "@tailwindcss/node@4.3.4"
+  - "@tailwindcss/oxide-android-arm64@4.3.4"
+  - "@tailwindcss/oxide-darwin-arm64@4.3.4"
+  - "@tailwindcss/oxide-darwin-x64@4.3.4"
+  - "@tailwindcss/oxide-freebsd-x64@4.3.4"
+  - "@tailwindcss/oxide-linux-arm-gnueabihf@4.3.4"
+  - "@tailwindcss/oxide-linux-arm64-gnu@4.3.4"
+  - "@tailwindcss/oxide-linux-arm64-musl@4.3.4"
+  - "@tailwindcss/oxide-linux-x64-gnu@4.3.4"
+  - "@tailwindcss/oxide-linux-x64-musl@4.3.4"
+  - "@tailwindcss/oxide-wasm32-wasi@4.3.4"
+  - "@tailwindcss/oxide-win32-arm64-msvc@4.3.4"
+  - "@tailwindcss/oxide-win32-x64-msvc@4.3.4"
+  - "@tailwindcss/oxide@4.3.4"
+  - "@tailwindcss/vite@4.3.4"
+  - "@tanstack/query-core@5.105.3"
+  - "@tanstack/react-query@5.105.3"
+  - lucide-react@1.67.0
+  - miniflare@5.20261103.0-beta
+  - tailwindcss@4.3.4
+  - workerd@1.20261103.1
+  - wrangler@4.157.0
+  - "@inlang/plugin-m-function-matcher@2.4.1"
+allowBuilds:
+  esbuild: true
+  workerd: true

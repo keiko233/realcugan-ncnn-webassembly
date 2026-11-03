@@ -1,0 +1,22 @@
+{
+  "name": "realcugan-ncnn-webassembly",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.15.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @realcugan/web dev",
+    "build": "pnpm --filter @realcugan/web build",
+    "preview": "pnpm --filter @realcugan/web preview",
+    "typecheck": "pnpm -r typecheck",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "wasm:build": "bash scripts/build-wasm.sh",
+    "deploy": "pnpm --filter @realcugan/web deploy"
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2"
+  }
+}
