@@ -11,7 +11,7 @@
     "i18n:compile": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide --strategy localStorage preferredLanguage baseLocale",
     "check:i18n": "inlang check --project ./project.inlang",
     "cf:dev": "pnpm build && wrangler dev",
-    "deploy": "pnpm build && wrangler deploy"
+    "deploy": "wrangler deploy"
   },
   "dependencies": {
     "@floating-ui/dom": "^1.8.0",
