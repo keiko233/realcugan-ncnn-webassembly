@@ -1,0 +1,3 @@
+# Emscripten build output is checked in so any static host can build the site
+# without the Emscripten toolchain. Never normalise or diff these as text.
+apps/web/public/wasm/* binary -diff -text

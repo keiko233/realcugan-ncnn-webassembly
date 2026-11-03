@@ -49,8 +49,10 @@ pnpm dev            # http://localhost:5173
 （`native/third_party/emsdk`），首次运行会下载并激活工具链，因此需要网络。设置
 `USE_DOCKER=1` 可改为在官方 `emscripten/emsdk` 镜像中构建。
 
-wasm 产物属于构建输出，已被 git 忽略——在 `pnpm build` 或部署前请先执行
-`pnpm wasm:build`。
+三个 wasm 产物（`realcugan.js`、`realcugan.wasm`、`realcugan.data`）已提交到
+`apps/web/public/wasm/`，因此只要 `pnpm install && pnpm build` 就能得到完整站点，
+无需 Emscripten 工具链。当 `native/` 有改动时，重新执行 `pnpm wasm:build` 并提交
+更新后的产物即可。
 
 ## 部署
 

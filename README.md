@@ -56,8 +56,10 @@ submodule (`native/third_party/emsdk`); the first run downloads and activates
 the toolchain, so it needs network access. Set `USE_DOCKER=1` to build inside
 the official `emscripten/emsdk` image instead.
 
-The wasm artifacts are build outputs and are git-ignored — always run
-`pnpm wasm:build` before `pnpm build` or a deploy.
+The three wasm artifacts (`realcugan.js`, `realcugan.wasm`, `realcugan.data`)
+are committed under `apps/web/public/wasm/`, so a plain `pnpm install && pnpm
+build` produces a complete site without the Emscripten toolchain. Re-run
+`pnpm wasm:build` whenever `native/` changes and commit the refreshed artifacts.
 
 ## Deployment
 
