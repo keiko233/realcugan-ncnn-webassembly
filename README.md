@@ -1,6 +1,6 @@
 # RealCUGAN-ncnn-webassembly
 
-[中文](./README_CN.md) · [Live demo](https://real-cugan.animesales.xyz/)
+[中文](./README_CN.md) · [Live demo](https://realcugan.majokeiko.com/)
 
 Run [Real-CUGAN](https://github.com/bilibili/ailab/tree/main/Real-CUGAN) anime
 super-resolution entirely in the browser. The model is compiled to WebAssembly

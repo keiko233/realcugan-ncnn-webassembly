@@ -1,6 +1,6 @@
 # RealCUGAN-ncnn-webassembly
 
-[English](./README.md) · [在线体验](https://real-cugan.animesales.xyz/)
+[English](./README.md) · [在线体验](https://realcugan.majokeiko.com/)
 
 本项目使用 WebAssembly 技术，基于 ncnn 在浏览器端运行 Real-CUGAN 模型，完全使用
 本机 CPU 完成动漫图片超分辨率，图片不会上传到任何服务器，也不依赖服务器算力。
