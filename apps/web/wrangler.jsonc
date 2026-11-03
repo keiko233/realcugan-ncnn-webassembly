@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "realcugan-web",
+  "compatibility_date": "2026-11-01",
+  // Pure static site: `vite build` output is uploaded as Workers static assets.
+  "assets": {
+    "directory": "./dist",
+    "html_handling": "auto-trailing-slash",
+    // TanStack Router handles unknown paths client-side.
+    "not_found_handling": "single-page-application",
+  },
+  "observability": {
+    "enabled": true,
+  },
+}
