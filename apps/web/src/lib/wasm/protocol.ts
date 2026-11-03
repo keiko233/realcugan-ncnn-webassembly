@@ -16,6 +16,11 @@ export const progressEventSchema = z.object({
   tile_cost: z.number(),
   progress_rate: z.number(),
   remaining_time: z.number(),
+  /** Rectangle of the tile that just finished, in output pixels. */
+  tile_x: z.number(),
+  tile_y: z.number(),
+  tile_w: z.number(),
+  tile_h: z.number(),
 });
 
 export const finishEventSchema = z.object({

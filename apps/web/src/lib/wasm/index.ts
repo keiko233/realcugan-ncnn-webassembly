@@ -3,7 +3,7 @@ import { RealcuganEngine } from "./engine";
 
 export { RealcuganEngine, OutOfMemoryError } from "./engine";
 export { EngineBusyError } from "./engine";
-export type { RunOptions, RunResult } from "./engine";
+export type { RunOptions, RunResult, TilePreview } from "./engine";
 export type { ProgressEvent } from "./protocol";
 
 let engine: RealcuganEngine | null = null;

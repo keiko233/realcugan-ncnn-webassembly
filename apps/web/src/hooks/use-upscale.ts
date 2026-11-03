@@ -2,12 +2,14 @@ import { useMutation } from "@tanstack/react-query";
 import { useCallback, useRef, useState } from "react";
 
 import type { Denoise, Scale } from "@/lib/enums";
-import { loadEngine, type ProgressEvent, type RunResult } from "@/lib/wasm";
+import { loadEngine, type ProgressEvent, type RunResult, type TilePreview } from "@/lib/wasm";
 
 export interface UpscaleInput {
   imageData: ImageData;
   scale: Scale;
   noise: Denoise;
+  /** Called with each finished tile so the stage can preview the run. */
+  onTile?: (tile: TilePreview) => void;
 }
 
 /**
@@ -37,7 +39,7 @@ export function useUpscale() {
   const discardRef = useRef(false);
 
   const mutation = useMutation<RunResult, Error, EngineInput>({
-    mutationFn: async ({ imageData, scale, noise, onSample }) => {
+    mutationFn: async ({ imageData, scale, noise, onSample, onTile }) => {
       discardRef.current = false;
       setDiscarding(false);
       setProgress(null);
@@ -47,9 +49,13 @@ export function useUpscale() {
         imageData,
         scale,
         noise,
+        onTile,
         onProgress: (event) => {
           onSample(event.progress_rate);
-          setProgress(event);
+          // Keep the last painted preview on screen after a discard.
+          if (!discardRef.current) {
+            setProgress(event);
+          }
         },
       });
     },

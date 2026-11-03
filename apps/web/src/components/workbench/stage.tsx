@@ -39,6 +39,8 @@ interface StageProps {
   source: LoadedImage | null;
   result: StageResult | null;
   resultCaption: string;
+  /** Live preview of the in-progress result, painted by the workbench. */
+  processingOverlay?: ReactNode;
   preview: PreviewMode;
   zoom: Zoom;
   onZoom: (zoom: Zoom) => void;
@@ -143,11 +145,13 @@ function ImageStage({
   src,
   box,
   className,
+  imgClassName,
   children,
 }: {
   src: string;
   box: Size;
   className?: string;
+  imgClassName?: string;
   children?: ReactNode;
 }) {
   return (
@@ -163,7 +167,7 @@ function ImageStage({
           src={src}
           alt=""
           draggable={false}
-          className="absolute inset-0 h-full w-full object-contain"
+          className={cn("absolute inset-0 h-full w-full object-contain", imgClassName)}
         />
         {children}
       </div>
@@ -175,10 +179,12 @@ function ProcessingStage({
   source,
   progress,
   viewport,
+  overlay,
 }: {
   source: LoadedImage;
   progress: ProgressEvent | null;
   viewport: Size;
+  overlay?: ReactNode;
 }) {
   const box = fitInside(viewport, { width: source.width, height: source.height });
   const rate = progress ? Math.min(1, Math.max(0, progress.progress_rate)) : 0;
@@ -186,14 +192,18 @@ function ProcessingStage({
 
   return (
     <div className="relative h-full w-full">
-      <ImageStage src={source.previewUrl} box={box}>
-        <div className="absolute inset-0 bg-chrome/50" />
-        {progress ? (
+      {/* The untouched region stays soft, so each finished tile reads as the
+          result sharpening into place rather than as an invisible update. */}
+      <ImageStage src={source.previewUrl} box={box} imgClassName="blur-[2.5px]">
+        {/* Finished tiles paint over the source, so the sharp result develops
+            on top of the blurry input as the run proceeds. */}
+        {overlay}
+        <div className="absolute inset-x-0 bottom-0 h-[3px] bg-foreground/15">
           <div
-            className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-primary transition-[left] duration-200 ease-linear"
-            style={{ left: `${rate * 100}%` }}
+            className="h-full bg-primary transition-[width] duration-200 ease-linear"
+            style={{ width: `${rate * 100}%` }}
           />
-        ) : null}
+        </div>
       </ImageStage>
 
       <div className="absolute inset-x-0 bottom-0 flex justify-center">
@@ -213,6 +223,7 @@ export function Stage({
   source,
   result,
   resultCaption,
+  processingOverlay,
   preview,
   zoom,
   onZoom,
@@ -309,7 +320,12 @@ export function Stage({
         ) : null}
 
         {state === "processing" && source ? (
-          <ProcessingStage source={source} progress={progress} viewport={size} />
+          <ProcessingStage
+            source={source}
+            progress={progress}
+            viewport={size}
+            overlay={processingOverlay}
+          />
         ) : null}
 
         {state === "source" && source && sourceBox ? (

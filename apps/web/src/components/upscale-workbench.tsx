@@ -43,6 +43,7 @@ import {
 import { useLocaleSubscription } from "@/lib/i18n";
 import { DENOISE_OPTIONS, PREVIEW_OPTIONS, SCALE_OPTIONS, denoiseLabel } from "@/lib/options";
 import { EngineBusyError, OutOfMemoryError } from "@/lib/wasm";
+import type { TilePreview } from "@/lib/wasm";
 
 const SAMPLE_NAME = "test-img.jpg";
 
@@ -124,6 +125,14 @@ export function UpscaleWorkbench() {
   const [sampleLoading, setSampleLoading] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [queue, setQueue] = useState<FileUploadItem[]>([]);
+  // Canvas the finished tiles are painted into while a run is in flight.
+  const previewCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [previewFrame, setPreviewFrame] = useState<{
+    run: number;
+    width: number;
+    height: number;
+  } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const saveTimer = useRef<number | null>(null);
 
   const engineState: EngineState = engineQuery.isSuccess
@@ -151,12 +160,22 @@ export function UpscaleWorkbench() {
     [],
   );
 
+  // Tiles arrive top-to-bottom while the run is in flight; drawing them into
+  // the overlay canvas reveals the sharp result over the blurry source.
+  const paintTile = useCallback((tile: TilePreview) => {
+    const canvas = previewCanvasRef.current;
+    const context = canvas?.getContext("2d");
+    if (!context) return;
+    context.putImageData(new ImageData(tile.pixels, tile.width, tile.height), tile.x, tile.y);
+  }, []);
+
   const runUpscale = useCallback(
     async (image: LoadedImage, nextScale: Scale, nextDenoise: Denoise) => {
       const output = await run({
         imageData: image.imageData,
         scale: nextScale,
         noise: nextDenoise,
+        onTile: paintTile,
       });
       if (!output) return;
 
@@ -169,7 +188,7 @@ export function UpscaleWorkbench() {
       });
       setApplied({ scale: nextScale, denoise: nextDenoise });
     },
-    [run],
+    [paintTile, run],
   );
 
   const start = useCallback(
@@ -178,6 +197,12 @@ export function UpscaleWorkbench() {
       setResult(null);
       setApplied(null);
       setSaveState("idle");
+      // A fresh canvas per run: reusing one would keep the previous preview.
+      setPreviewFrame((current) => ({
+        run: (current?.run ?? 0) + 1,
+        width: image.width * nextScale,
+        height: image.height * nextScale,
+      }));
       setSource(image);
       setQueue([]);
       try {
@@ -456,7 +481,7 @@ export function UpscaleWorkbench() {
             </Button>
           ) : (
             <Button
-              onClick={() => document.getElementById("stage-file-input")?.click()}
+              onClick={() => fileInputRef.current?.click()}
               disabled={engineState !== "ready"}
               className="w-full"
             >
@@ -481,7 +506,7 @@ export function UpscaleWorkbench() {
               <Button
                 variant="outline"
                 disabled={isPending}
-                onClick={() => document.getElementById("stage-file-input")?.click()}
+                onClick={() => fileInputRef.current?.click()}
                 className="w-full"
               >
                 <RotateCcw className="size-4" />
@@ -512,6 +537,18 @@ export function UpscaleWorkbench() {
           onZoom={setZoom}
           progress={progress}
           resultCaption={resultCaption}
+          processingOverlay={
+            previewFrame ? (
+              <canvas
+                key={previewFrame.run}
+                ref={previewCanvasRef}
+                width={previewFrame.width}
+                height={previewFrame.height}
+                aria-hidden
+                className="absolute inset-0 h-full w-full"
+              />
+            ) : null
+          }
           queue={queue}
           onQueueChange={setQueue}
           sampleLoading={sampleLoading}
@@ -548,6 +585,20 @@ export function UpscaleWorkbench() {
       </div>
 
       <AnimatedToastStack toasts={toasts} onDismiss={dismissToast} position="bottom-left" fixed />
+
+      {/* Single picker shared by the rail's "choose"/"another image" actions. */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={ACCEPTED_IMAGE_TYPES.join(",")}
+        className="sr-only"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          // Reset so picking the same file twice still fires a change event.
+          event.target.value = "";
+          if (file) void handleFile(file);
+        }}
+      />
     </div>
   );
 }
