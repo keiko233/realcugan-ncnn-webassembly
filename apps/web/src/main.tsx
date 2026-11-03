@@ -1,6 +1,4 @@
-import "@fontsource-variable/bricolage-grotesque";
-import "@fontsource-variable/instrument-sans";
-import "@fontsource-variable/jetbrains-mono";
+import "@fontsource-variable/inter";
 import "./styles.css";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
