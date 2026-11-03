@@ -1,0 +1,208 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Theme: "darkroom" - warm paper, ink, and a vermilion accent.
+ * Values are plain hex so they stay readable and easy to tweak; the
+ * `@theme inline` block below maps them onto Tailwind/shadcn tokens.
+ */
+:root {
+  --radius: 0.9rem;
+
+  --background: #f5f1e8;
+  --foreground: #1b1712;
+
+  --card: #fffdf8;
+  --card-foreground: #1b1712;
+
+  --popover: #fffdf8;
+  --popover-foreground: #1b1712;
+
+  --primary: #d4470f;
+  --primary-foreground: #fff9f5;
+
+  --secondary: #ebe4d5;
+  --secondary-foreground: #2a241a;
+
+  --muted: #eee8db;
+  --muted-foreground: #736a58;
+
+  --accent: #e7dfcd;
+  --accent-foreground: #241f16;
+
+  --destructive: #b0251b;
+  --destructive-foreground: #fff8f5;
+
+  --success: #1f6b46;
+  --success-foreground: #f4fbf6;
+
+  --border: #ddd4c1;
+  --input: #ddd4c1;
+  --ring: #d4470f;
+
+  --chart-1: #d4470f;
+  --chart-2: #12504f;
+  --chart-3: #b8892b;
+  --chart-4: #4c6b8a;
+  --chart-5: #8a3b6b;
+}
+
+.dark {
+  --background: #14110d;
+  --foreground: #f2ede2;
+
+  --card: #1c1813;
+  --card-foreground: #f2ede2;
+
+  --popover: #1c1813;
+  --popover-foreground: #f2ede2;
+
+  --primary: #f4673a;
+  --primary-foreground: #1b0f08;
+
+  --secondary: #2a241c;
+  --secondary-foreground: #efe9dd;
+
+  --muted: #26211a;
+  --muted-foreground: #a89e8b;
+
+  --accent: #2f281f;
+  --accent-foreground: #f2ede2;
+
+  --destructive: #e5564a;
+  --destructive-foreground: #1b0f08;
+
+  --success: #4fb37f;
+  --success-foreground: #0d1a12;
+
+  --border: #322b21;
+  --input: #322b21;
+  --ring: #f4673a;
+}
+
+@theme inline {
+  --font-sans: "Instrument Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque Variable", "Instrument Sans Variable", sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    background-image: radial-gradient(
+      circle at 1px 1px,
+      color-mix(in oklab, var(--foreground) 9%, transparent) 1px,
+      transparent 0
+    );
+    background-size: 22px 22px;
+  }
+}
+
+@layer components {
+  /* Paper-like surface used for the main panels. */
+  .surface {
+    @apply rounded-xl border border-border bg-card;
+    box-shadow:
+      0 1px 0 color-mix(in oklab, var(--foreground) 4%, transparent),
+      0 18px 40px -28px color-mix(in oklab, var(--foreground) 55%, transparent);
+  }
+
+  .eyebrow {
+    @apply font-mono text-[0.68rem] tracking-[0.22em] uppercase text-muted-foreground;
+  }
+
+  /* Checkerboard shown behind transparent PNG results. */
+  .checkerboard {
+    background-color: color-mix(in oklab, var(--muted) 70%, white);
+    background-image:
+      linear-gradient(
+        45deg,
+        color-mix(in oklab, var(--foreground) 8%, transparent) 25%,
+        transparent 25%
+      ),
+      linear-gradient(
+        -45deg,
+        color-mix(in oklab, var(--foreground) 8%, transparent) 25%,
+        transparent 25%
+      ),
+      linear-gradient(
+        45deg,
+        transparent 75%,
+        color-mix(in oklab, var(--foreground) 8%, transparent) 75%
+      ),
+      linear-gradient(
+        -45deg,
+        transparent 75%,
+        color-mix(in oklab, var(--foreground) 8%, transparent) 75%
+      );
+    background-size: 18px 18px;
+    background-position:
+      0 0,
+      0 9px,
+      9px -9px,
+      -9px 0;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-rise {
+  animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise {
+    animation: none;
+  }
+}

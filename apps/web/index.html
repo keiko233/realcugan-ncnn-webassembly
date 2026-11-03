@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <meta name="theme-color" content="#f6f2ea" />
+    <title>Real-CUGAN · 动漫图片超分辨率</title>
+    <meta
+      name="description"
+      content="基于 WebAssembly 的 Real-CUGAN 动漫图片超分辨率工具。全部计算在浏览器本地完成，图片不会上传到任何服务器。"
+    />
+    <meta property="og:title" content="Real-CUGAN · 动漫图片超分辨率" />
+    <meta
+      property="og:description"
+      content="在浏览器本地运行的动漫图片超分辨率工具，支持 2x / 3x 放大与多档降噪。"
+    />
+    <meta property="og:type" content="website" />
+    <script>
+      // Apply the stored theme before first paint to avoid a flash of the wrong
+      // colour scheme. Keep in sync with src/lib/theme.tsx.
+      (function () {
+        try {
+          var stored = localStorage.getItem("realcugan.theme");
+          var dark = stored
+            ? stored === "dark"
+            : window.matchMedia("(prefers-color-scheme: dark)").matches;
+          if (dark) document.documentElement.classList.add("dark");
+          document.documentElement.style.colorScheme = dark ? "dark" : "light";
+        } catch (error) {
+          /* localStorage can be unavailable in private modes */
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>本站需要启用 JavaScript 与 WebAssembly 才能运行。</noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
