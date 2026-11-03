@@ -13,7 +13,13 @@ import {
 } from "@/components/motion/animated-toast-stack";
 import { UtilityCluster } from "@/components/utility-cluster";
 import { OptionTabs } from "@/components/workbench/option-tabs";
-import { Stage, type StageResult, type StageState } from "@/components/workbench/stage";
+import type { Size } from "@/components/workbench/compare-view";
+import {
+  Stage,
+  type ProcessingTile,
+  type StageResult,
+  type StageState,
+} from "@/components/workbench/stage";
 import { useEngine } from "@/hooks/use-engine";
 import {
   decodeNumericEnum,
@@ -125,13 +131,10 @@ export function UpscaleWorkbench() {
   const [sampleLoading, setSampleLoading] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [queue, setQueue] = useState<FileUploadItem[]>([]);
-  // Canvas the finished tiles are painted into while a run is in flight.
-  const previewCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [previewFrame, setPreviewFrame] = useState<{
-    run: number;
-    width: number;
-    height: number;
-  } | null>(null);
+  // Finished tiles of the run in flight, plus how much of it they cover.
+  const [tiles, setTiles] = useState<ProcessingTile[]>([]);
+  const [processingOutput, setProcessingOutput] = useState<Size | null>(null);
+  const tileIdRef = useRef(0);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const saveTimer = useRef<number | null>(null);
 
@@ -160,13 +163,26 @@ export function UpscaleWorkbench() {
     [],
   );
 
-  // Tiles arrive top-to-bottom while the run is in flight; drawing them into
-  // the overlay canvas reveals the sharp result over the blurry source.
+  // Tiles arrive top-to-bottom while the run is in flight. Each one gets its
+  // own canvas, painted here and then handed to the stage to animate in, so
+  // the pixel buffer is never held twice.
   const paintTile = useCallback((tile: TilePreview) => {
-    const canvas = previewCanvasRef.current;
-    const context = canvas?.getContext("2d");
+    const canvas = document.createElement("canvas");
+    canvas.width = tile.width;
+    canvas.height = tile.height;
+    canvas.style.display = "block";
+    canvas.style.width = "100%";
+    canvas.style.height = "100%";
+    const context = canvas.getContext("2d");
     if (!context) return;
-    context.putImageData(new ImageData(tile.pixels, tile.width, tile.height), tile.x, tile.y);
+    context.putImageData(new ImageData(tile.pixels, tile.width, tile.height), 0, 0);
+
+    tileIdRef.current += 1;
+    const id = tileIdRef.current;
+    setTiles((current) => [
+      ...current,
+      { id, x: tile.x, y: tile.y, width: tile.width, height: tile.height, canvas },
+    ]);
   }, []);
 
   const runUpscale = useCallback(
@@ -197,12 +213,12 @@ export function UpscaleWorkbench() {
       setResult(null);
       setApplied(null);
       setSaveState("idle");
-      // A fresh canvas per run: reusing one would keep the previous preview.
-      setPreviewFrame((current) => ({
-        run: (current?.run ?? 0) + 1,
+      setTiles([]);
+      // Tiles from the previous run must not linger over the new one.
+      setProcessingOutput({
         width: image.width * nextScale,
         height: image.height * nextScale,
-      }));
+      });
       setSource(image);
       setQueue([]);
       try {
@@ -537,18 +553,8 @@ export function UpscaleWorkbench() {
           onZoom={setZoom}
           progress={progress}
           resultCaption={resultCaption}
-          processingOverlay={
-            previewFrame ? (
-              <canvas
-                key={previewFrame.run}
-                ref={previewCanvasRef}
-                width={previewFrame.width}
-                height={previewFrame.height}
-                aria-hidden
-                className="absolute inset-0 h-full w-full"
-              />
-            ) : null
-          }
+          processingTiles={tiles}
+          processingOutput={processingOutput}
           queue={queue}
           onQueueChange={setQueue}
           sampleLoading={sampleLoading}

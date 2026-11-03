@@ -1,4 +1,5 @@
 import { Expand, ImagePlus, TriangleAlert } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
 import {
   useCallback,
   useEffect,
@@ -18,6 +19,7 @@ import { Tooltip } from "@/components/motion/tooltip";
 import { CompareView, fitInside, type Size } from "@/components/workbench/compare-view";
 import { OptionTabs } from "@/components/workbench/option-tabs";
 import type { ProgressSample } from "@/hooks/use-upscale";
+import { EASE_OUT } from "@/lib/ease";
 import { ACCEPTED_IMAGE_TYPES, PreviewMode, Zoom } from "@/lib/enums";
 import type { LoadedImage } from "@/lib/image";
 import { ZOOM_OPTIONS } from "@/lib/options";
@@ -39,8 +41,10 @@ interface StageProps {
   source: LoadedImage | null;
   result: StageResult | null;
   resultCaption: string;
-  /** Live preview of the in-progress result, painted by the workbench. */
-  processingOverlay?: ReactNode;
+  /** Finished tiles of the in-flight result, oldest first. */
+  processingTiles: ProcessingTile[];
+  /** Output pixel size of the in-flight result, for placing the tiles. */
+  processingOutput: Size | null;
   preview: PreviewMode;
   zoom: Zoom;
   onZoom: (zoom: Zoom) => void;
@@ -78,14 +82,17 @@ function Notice({
   title,
   body,
   action,
+  mask = false,
 }: {
   icon: ReactNode;
   title: string;
   body?: string;
   action?: ReactNode;
+  /** Back the notice with the hatch mask, for states that are still loading. */
+  mask?: boolean;
 }) {
   return (
-    <div className="flex h-full w-full items-center justify-center">
+    <div className={cn("flex h-full w-full items-center justify-center", mask && "loading-mask")}>
       <div className="flex max-w-sm flex-col items-center gap-3 text-center">
         <span className="text-muted-foreground">{icon}</span>
         <p className="text-sm font-semibold">{title}</p>
@@ -173,27 +180,101 @@ function ImageStage({
   );
 }
 
+/** One finished tile of the in-flight result, in output pixels. */
+export interface ProcessingTile {
+  id: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  /**
+   * Painted once when the tile arrives. The tile owns the canvas so the run
+   * only ever holds a single copy of the pixels.
+   */
+  canvas: HTMLCanvasElement;
+}
+
+/**
+ * A tile lands as its own block and settles into place: it fades in while
+ * easing back from a hair larger than its cell, so the grid fills in piece by
+ * piece instead of appearing all at once.
+ */
+function TileBlock({ tile, output }: { tile: ProcessingTile; output: Size }) {
+  const reduce = useReducedMotion();
+  const hostRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+    host.appendChild(tile.canvas);
+    return () => tile.canvas.remove();
+  }, [tile]);
+
+  return (
+    <motion.div
+      ref={hostRef}
+      initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 1.04 }}
+      animate={reduce ? { opacity: 1 } : { opacity: 1, scale: 1 }}
+      transition={reduce ? { duration: 0.15 } : { duration: 0.32, ease: EASE_OUT }}
+      className="pointer-events-none absolute"
+      style={{
+        left: `${(tile.x / output.width) * 100}%`,
+        top: `${(tile.y / output.height) * 100}%`,
+        width: `${(tile.width / output.width) * 100}%`,
+        height: `${(tile.height / output.height) * 100}%`,
+      }}
+    />
+  );
+}
+
 function ProcessingStage({
   source,
   progress,
   viewport,
-  overlay,
+  tiles,
+  output,
 }: {
   source: LoadedImage;
   progress: ProgressEvent | null;
   viewport: Size;
-  overlay?: ReactNode;
+  tiles: ProcessingTile[];
+  output: Size | null;
 }) {
   const box = fitInside(viewport, { width: source.width, height: source.height });
   const rate = progress ? Math.min(1, Math.max(0, progress.progress_rate)) : 0;
   const percent = Math.round(rate * 100);
 
+  // The engine walks the image left to right, row by row, so the last finished
+  // tile says which row it is on. The mask therefore starts at the top of that
+  // row - the rows below are genuinely untouched - and the tiles that have
+  // landed punch through it one block at a time.
+  const maskHeight = useMemo(() => {
+    const last = tiles[tiles.length - 1];
+    if (!output) return null;
+    const rowTop = last ? last.y / output.height : 0;
+    return `${(1 - rowTop) * 100}%`;
+  }, [output, tiles]);
+
   return (
     <div className="relative h-full w-full">
       <ImageStage src={source.previewUrl} box={box}>
-        {/* Finished tiles paint over the source, so the result develops on
-            top of the input as the run proceeds. */}
-        {overlay}
+        {/* Everything the engine has not reached is hatched. Its hard top edge
+            is the real boundary, so nothing has to be softened to read. */}
+        {maskHeight ? (
+          <div
+            aria-hidden
+            className="loading-mask pointer-events-none absolute inset-x-0 bottom-0"
+            style={{ height: maskHeight }}
+          >
+            <div className="absolute inset-x-0 top-0 h-px bg-primary" />
+          </div>
+        ) : null}
+
+        {/* Finished tiles land over the hatch, one block at a time. */}
+        {output
+          ? tiles.map((tile) => <TileBlock key={tile.id} tile={tile} output={output} />)
+          : null}
+
         <div className="absolute inset-x-0 bottom-0 h-[3px] bg-foreground/15">
           <div
             className="h-full bg-primary transition-[width] duration-200 ease-linear"
@@ -219,7 +300,8 @@ export function Stage({
   source,
   result,
   resultCaption,
-  processingOverlay,
+  processingTiles,
+  processingOutput,
   preview,
   zoom,
   onZoom,
@@ -297,6 +379,7 @@ export function Stage({
 
         {state === "engine-loading" ? (
           <Notice
+            mask
             icon={<Loader variant="dot-matrix" size={40} label={m.stage_engine_loading()} />}
             title={m.stage_engine_loading()}
           />
@@ -320,7 +403,8 @@ export function Stage({
             source={source}
             progress={progress}
             viewport={size}
-            overlay={processingOverlay}
+            tiles={processingTiles}
+            output={processingOutput}
           />
         ) : null}
 

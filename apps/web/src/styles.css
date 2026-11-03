@@ -233,4 +233,20 @@
   .tnum {
     font-variant-numeric: tabular-nums;
   }
+
+  /*
+   * "Not computed yet" mask. A theme-aware scrim plus a fine diagonal hatch
+   * drawn with hard 1px rules - the whole point is that nothing here is
+   * softened, so the edge against finished work reads as a real boundary.
+   */
+  .loading-mask {
+    background-color: color-mix(in oklab, var(--paper) 58%, transparent);
+    background-image: repeating-linear-gradient(
+      -45deg,
+      color-mix(in oklab, var(--foreground) 11%, transparent) 0,
+      color-mix(in oklab, var(--foreground) 11%, transparent) 1px,
+      transparent 1px,
+      transparent 8px
+    );
+  }
 }
