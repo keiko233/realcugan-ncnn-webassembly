@@ -243,16 +243,23 @@ function ProcessingStage({
   const box = fitInside(viewport, { width: source.width, height: source.height });
   const rate = progress ? Math.min(1, Math.max(0, progress.progress_rate)) : 0;
   const percent = Math.round(rate * 100);
+  const reduce = useReducedMotion();
 
   // The engine walks the image left to right, row by row, so the last finished
-  // tile says which row it is on. The mask therefore starts at the top of that
-  // row - the rows below are genuinely untouched - and the tiles that have
-  // landed punch through it one block at a time.
-  const maskHeight = useMemo(() => {
+  // tile says everything: which row is being scanned, and how far across it has
+  // walked. The mask therefore starts at the top of that row - the rows below
+  // are genuinely untouched - and the beam rides the tile's trailing edge,
+  // gliding back to the left for the next pass like a real scanner's flyback.
+  const scan = useMemo(() => {
     const last = tiles[tiles.length - 1];
     if (!output) return null;
     const rowTop = last ? last.y / output.height : 0;
-    return `${(1 - rowTop) * 100}%`;
+    return {
+      maskHeight: `${(1 - rowTop) * 100}%`,
+      rowTop: `${rowTop * 100}%`,
+      rowHeight: last ? `${(last.height / output.height) * 100}%` : "0%",
+      head: last ? `${((last.x + last.width) / output.width) * 100}%` : null,
+    };
   }, [output, tiles]);
 
   return (
@@ -260,11 +267,11 @@ function ProcessingStage({
       <ImageStage src={source.previewUrl} box={box}>
         {/* Everything the engine has not reached is hatched. Its hard top edge
             is the real boundary, so nothing has to be softened to read. */}
-        {maskHeight ? (
+        {scan ? (
           <div
             aria-hidden
             className="loading-mask pointer-events-none absolute inset-x-0 bottom-0"
-            style={{ height: maskHeight }}
+            style={{ height: scan.maskHeight }}
           >
             <div className="absolute inset-x-0 top-0 h-px bg-primary" />
           </div>
@@ -274,6 +281,20 @@ function ProcessingStage({
         {output
           ? tiles.map((tile) => <TileBlock key={tile.id} tile={tile} output={output} />)
           : null}
+
+        {scan?.head ? (
+          <motion.div
+            aria-hidden
+            initial={false}
+            animate={{ left: scan.head }}
+            transition={reduce ? { duration: 0 } : { duration: 0.34, ease: EASE_OUT }}
+            className="pointer-events-none absolute w-6"
+            style={{ top: scan.rowTop, height: scan.rowHeight, x: "-50%" }}
+          >
+            <span className="scan-wash absolute inset-0" />
+            <span className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-primary" />
+          </motion.div>
+        ) : null}
 
         <div className="absolute inset-x-0 bottom-0 h-[3px] bg-foreground/15">
           <div

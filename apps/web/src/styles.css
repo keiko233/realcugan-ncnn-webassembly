@@ -249,4 +249,17 @@
       transparent 8px
     );
   }
+
+  /*
+   * The head of the scan beam. A hard-edged gradient rather than a blur, so
+   * the sweep still reads as a printed rule instead of a glow.
+   */
+  .scan-wash {
+    background: linear-gradient(
+      to right,
+      transparent,
+      color-mix(in oklab, var(--foreground) 20%, transparent),
+      transparent
+    );
+  }
 }
