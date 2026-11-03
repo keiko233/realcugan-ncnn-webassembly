@@ -2,6 +2,8 @@ node_modules
 dist
 .wrangler
 pnpm-lock.yaml
+# Impeccable working artifacts (sketches, comps, review captures).
+.impeccable
 # Vendored submodules are third-party sources and must not be reformatted.
 native/third_party
 native/build
