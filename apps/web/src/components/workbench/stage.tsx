@@ -145,13 +145,11 @@ function ImageStage({
   src,
   box,
   className,
-  imgClassName,
   children,
 }: {
   src: string;
   box: Size;
   className?: string;
-  imgClassName?: string;
   children?: ReactNode;
 }) {
   return (
@@ -167,7 +165,7 @@ function ImageStage({
           src={src}
           alt=""
           draggable={false}
-          className={cn("absolute inset-0 h-full w-full object-contain", imgClassName)}
+          className="absolute inset-0 h-full w-full object-contain"
         />
         {children}
       </div>
@@ -192,11 +190,9 @@ function ProcessingStage({
 
   return (
     <div className="relative h-full w-full">
-      {/* The untouched region stays soft, so each finished tile reads as the
-          result sharpening into place rather than as an invisible update. */}
-      <ImageStage src={source.previewUrl} box={box} imgClassName="blur-[2.5px]">
-        {/* Finished tiles paint over the source, so the sharp result develops
-            on top of the blurry input as the run proceeds. */}
+      <ImageStage src={source.previewUrl} box={box}>
+        {/* Finished tiles paint over the source, so the result develops on
+            top of the input as the run proceeds. */}
         {overlay}
         <div className="absolute inset-x-0 bottom-0 h-[3px] bg-foreground/15">
           <div
