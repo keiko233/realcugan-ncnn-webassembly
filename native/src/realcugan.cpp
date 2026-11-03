@@ -59,7 +59,7 @@ int RealCUGAN::load(int scaleOption, int noiseOption) {
 
 // CPU-only tiled inference. The image is split into 200x200 tiles with an
 // overlap ("prepadding") so that seams between tiles are invisible.
-int RealCUGAN::process(const ncnn::Mat &inimage, ncnn::Mat &outimage) {
+int RealCUGAN::process(const ncnn::Mat &inimage, ncnn::Mat &outimage, unsigned char *rgba_out) {
     const auto begin = std::chrono::steady_clock::now();
     const auto *pixeldata = static_cast<const unsigned char *>(inimage.data);
     const int w = inimage.w;
@@ -170,11 +170,35 @@ int RealCUGAN::process(const ncnn::Mat &inimage, ncnn::Mat &outimage) {
                 }
             }
 
+            const int out_w = w * scale;
+            const int out_x = xi * scale * TILE_SIZE_X;
+            const int out_y = yi * scale * TILE_SIZE_Y;
+            const int out_tile_w = tile_w_nopad * scale;
+            const int out_tile_h = tile_h_nopad * scale;
+
             if (channels == 3) {
-                out_tile_pixels.to_pixels(static_cast<unsigned char *>(outimage.data) +
-                                                  yi * scale * TILE_SIZE_Y * w * scale * channels +
-                                                  xi * scale * TILE_SIZE_X * channels,
-                                          ncnn::Mat::PIXEL_RGB, w * scale * channels);
+                out_tile_pixels.to_pixels(
+                        static_cast<unsigned char *>(outimage.data) + out_y * out_w * channels + out_x * channels,
+                        ncnn::Mat::PIXEL_RGB, out_w * channels);
+
+                // Stream the finished tile straight into the caller's RGBA
+                // buffer so the frontend can preview the result while the rest
+                // of the image is still being computed.
+                if (rgba_out != nullptr) {
+                    const auto *src = static_cast<const unsigned char *>(outimage.data);
+                    for (int row = 0; row < out_tile_h; row++) {
+                        const unsigned char *src_row = src + ((out_y + row) * out_w + out_x) * 3;
+                        unsigned char *dst_row = rgba_out + ((out_y + row) * out_w + out_x) * 4;
+                        for (int col = 0; col < out_tile_w; col++) {
+                            dst_row[0] = src_row[0];
+                            dst_row[1] = src_row[1];
+                            dst_row[2] = src_row[2];
+                            dst_row[3] = 255;
+                            src_row += 3;
+                            dst_row += 4;
+                        }
+                    }
+                }
             }
 
             const auto tile_end = std::chrono::steady_clock::now();
@@ -184,7 +208,8 @@ int RealCUGAN::process(const ncnn::Mat &inimage, ncnn::Mat &outimage) {
                     std::chrono::duration_cast<std::chrono::milliseconds>(tile_end - begin).count();
             const float progress_rate =
                     static_cast<float>(xtiles * yi + xi + 1) / static_cast<float>(xtiles * ytiles);
-            realcugan_report_progress(static_cast<long>(total_cost), static_cast<long>(tile_cost), progress_rate);
+            realcugan_report_progress(static_cast<long>(total_cost), static_cast<long>(tile_cost), progress_rate,
+                                      out_x, out_y, out_tile_w, out_tile_h);
         }
     }
 

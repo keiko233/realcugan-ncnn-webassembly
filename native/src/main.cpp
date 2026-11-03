@@ -61,19 +61,6 @@ void remove_alpha_channel(unsigned char *image_data, int w, int h) {
     }
 }
 
-// Expand the RGB result produced by ncnn back to the RGBA layout the browser
-// expects for ImageData.
-void copy_with_alpha_channel(unsigned char *dst, const unsigned char *src, int w, int h) {
-    for (int i = 0; i < w * h; i++) {
-        dst[0] = src[0];
-        dst[1] = src[1];
-        dst[2] = src[2];
-        dst[3] = 255;
-        dst += 4;
-        src += 3;
-    }
-}
-
 void worker() {
     while (true) {
         g_task_lock.lock();
@@ -94,9 +81,9 @@ void worker() {
                 ncnn::Mat(g_task->width, g_task->height, static_cast<void *>(g_task->input), 3, 3);
         ncnn::Mat out_image = ncnn::Mat(in_image.w * g_realcugan->scale, in_image.h * g_realcugan->scale, 3, 3);
 
-        g_realcugan->process(in_image, out_image);
-        copy_with_alpha_channel(g_task->output, static_cast<const unsigned char *>(out_image.data), out_image.w,
-                                out_image.h);
+        // Tiles are streamed into the caller's RGBA buffer as they finish, so
+        // no final copy is needed.
+        g_realcugan->process(in_image, out_image, g_task->output);
 
         const auto end = std::chrono::steady_clock::now();
         const auto cost = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
@@ -115,7 +102,8 @@ void worker() {
 } // namespace
 
 // Declared in realcugan.h and called from the inference loop.
-void realcugan_report_progress(long total_cost, long tile_cost, float progress_rate) {
+void realcugan_report_progress(long total_cost, long tile_cost, float progress_rate, int tile_x, int tile_y,
+                               int tile_w, int tile_h) {
     long remaining_time = 0;
     if (progress_rate > 0.f) {
         remaining_time = static_cast<long>(static_cast<float>(total_cost) / progress_rate) - total_cost;
@@ -123,7 +111,9 @@ void realcugan_report_progress(long total_cost, long tile_cost, float progress_r
 
     emit(std::string("{\"eventType\":\"PROC_PROGRESS\",\"total_cost\":") + std::to_string(total_cost) +
          ",\"tile_cost\":" + std::to_string(tile_cost) + ",\"progress_rate\":" + std::to_string(progress_rate) +
-         ",\"remaining_time\":" + std::to_string(remaining_time) + "}");
+         ",\"remaining_time\":" + std::to_string(remaining_time) + ",\"tile_x\":" + std::to_string(tile_x) +
+         ",\"tile_y\":" + std::to_string(tile_y) + ",\"tile_w\":" + std::to_string(tile_w) +
+         ",\"tile_h\":" + std::to_string(tile_h) + "}");
 }
 
 extern "C" {
