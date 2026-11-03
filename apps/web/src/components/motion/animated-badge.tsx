@@ -29,11 +29,13 @@ export interface AnimatedBadgeProps extends Omit<HTMLMotionProps<"span">, "child
 
 const STATUS_CLASS: Record<AnimatedBadgeStatus, string> = {
   neutral: "border-border bg-card text-muted-foreground",
-  info: "border-primary/30 bg-muted text-primary",
-  success: "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-  warning: "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  danger: "border-destructive/30 bg-destructive/10 text-destructive",
-  loading: "border-primary/30 bg-muted text-primary",
+  info: "border-border bg-muted text-foreground",
+  loading: "border-border bg-muted text-foreground",
+  // The palette has no hue: severity is carried by ink weight and by the
+  // icon, so the strongest state is the inverted pill.
+  success: "border-foreground/25 bg-muted text-foreground",
+  warning: "border-foreground/40 bg-muted text-foreground",
+  danger: "border-foreground bg-foreground text-background",
 };
 
 const SIZE_CLASS: Record<AnimatedBadgeSize, string> = {

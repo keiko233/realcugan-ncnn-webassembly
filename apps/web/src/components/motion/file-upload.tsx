@@ -80,9 +80,9 @@ const STATUS_LABEL: Record<FileUploadStatus, string> = {
 
 const STATUS_TONE: Record<FileUploadStatus, string> = {
   queued: "text-muted-foreground",
-  uploading: "text-foreground",
-  success: "text-emerald-600 dark:text-emerald-400",
-  error: "text-destructive",
+  uploading: "text-muted-foreground",
+  success: "text-foreground",
+  error: "text-foreground",
 };
 
 function useControllableUpload({
@@ -311,10 +311,7 @@ function FileUploadRow({
               )}
             >
               <motion.div
-                className={cn(
-                  "h-full rounded-full",
-                  status === "success" ? "bg-emerald-500" : "bg-foreground",
-                )}
+                className="h-full rounded-full bg-foreground"
                 style={{
                   transformOrigin: "left",
                   transform: reduce ? `scaleX(${progressRatio})` : undefined,

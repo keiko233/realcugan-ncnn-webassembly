@@ -91,8 +91,10 @@ const STATUS_CLASS: Record<ToastStatus, string> = {
   neutral: "text-muted-foreground bg-muted/60",
   info: "text-primary bg-muted",
   loading: "text-primary bg-muted",
-  success: "text-emerald-600 bg-emerald-500/10 dark:text-emerald-400",
-  error: "text-destructive bg-destructive/10",
+  // Monochrome chips: the icon carries the state, the inverted fill carries
+  // the weight, so no hue is needed.
+  success: "text-foreground bg-muted",
+  error: "text-background bg-foreground",
 };
 
 const POSITION_CLASS: Record<ToastPosition, string> = {
