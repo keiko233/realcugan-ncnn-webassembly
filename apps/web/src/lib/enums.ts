@@ -23,6 +23,12 @@ export enum PreviewMode {
   Stacked = "stacked",
 }
 
+/** Stage scale: fit the stage, or show the result at its own pixels. */
+export enum Zoom {
+  Fit = "fit",
+  Actual = "actual",
+}
+
 export enum Theme {
   Light = "light",
   Dark = "dark",
@@ -32,6 +38,7 @@ export enum StorageKey {
   Scale = "realcugan.scale",
   Denoise = "realcugan.denoise",
   Preview = "realcugan.preview",
+  Zoom = "realcugan.zoom",
   Theme = "realcugan.theme",
 }
 

@@ -2,6 +2,7 @@ import { WASM_BASE_URL } from "../config";
 import { RealcuganEngine } from "./engine";
 
 export { RealcuganEngine, OutOfMemoryError } from "./engine";
+export { EngineBusyError } from "./engine";
 export type { RunOptions, RunResult } from "./engine";
 export type { ProgressEvent } from "./protocol";
 

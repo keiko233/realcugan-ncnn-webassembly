@@ -19,8 +19,20 @@ export interface RunResult {
 
 export class OutOfMemoryError extends Error {
   constructor() {
-    super("浏览器内存不足，请刷新页面后重试。");
+    super("The wasm heap ran out of memory.");
     this.name = "OutOfMemoryError";
+  }
+}
+
+/**
+ * The native side keeps a single worker thread, so a second job is refused
+ * while the previous one drains. Callers surface this as "still finishing the
+ * previous image" rather than as a failure.
+ */
+export class EngineBusyError extends Error {
+  constructor() {
+    super("The engine is still processing the previous image.");
+    this.name = "EngineBusyError";
   }
 }
 
@@ -36,7 +48,7 @@ function injectScript(src: string): Promise<void> {
     script.src = src;
     script.async = true;
     script.onload = () => resolve();
-    script.onerror = () => reject(new Error(`无法加载 ${src}`));
+    script.onerror = () => reject(new Error(`Failed to load ${src}`));
     document.head.appendChild(script);
   });
 }
@@ -64,7 +76,7 @@ export class RealcuganEngine {
 
     const factory = globalThis.createRealCuganModule;
     if (typeof factory !== "function") {
-      throw new Error("createRealCuganModule 未定义，无法初始化引擎。");
+      throw new Error("createRealCuganModule is undefined; the engine cannot start.");
     }
 
     const module: unknown = await factory({
@@ -84,10 +96,10 @@ export class RealcuganEngine {
   async run({ imageData, scale, noise, onProgress }: RunOptions): Promise<RunResult> {
     const module = this.module;
     if (!module) {
-      throw new Error("引擎尚未加载完成。");
+      throw new Error("The engine has not finished loading.");
     }
     if (this.busy) {
-      throw new Error("已有任务正在处理中，请稍候。");
+      throw new EngineBusyError();
     }
     if (this.outOfMemory) {
       throw new OutOfMemoryError();
@@ -114,7 +126,7 @@ export class RealcuganEngine {
         const status = module._process_image(0, srcPtr, dstPtr, width, height, scale, noise);
         if (status !== 0) {
           this.pending = null;
-          reject(new Error("引擎正忙，请稍后重试。"));
+          reject(new EngineBusyError());
         }
       });
 

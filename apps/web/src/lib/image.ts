@@ -21,7 +21,7 @@ async function decodeToImageData(blob: Blob): Promise<ImageData> {
 
     const context = canvas.getContext("2d");
     if (!context) {
-      throw new Error("无法创建 canvas 上下文。");
+      throw new Error("The canvas 2d context is unavailable.");
     }
 
     context.drawImage(bitmap, 0, 0);
@@ -46,7 +46,7 @@ export async function loadImageFile(file: File): Promise<LoadedImage> {
 export async function loadImageFromUrl(url: string, name: string): Promise<LoadedImage> {
   const response = await fetch(url);
   if (!response.ok) {
-    throw new Error(`示例图片加载失败 (${response.status})`);
+    throw new Error(`The sample image failed to load (${response.status}).`);
   }
 
   const blob = await response.blob();
@@ -68,13 +68,13 @@ export async function imageDataToBlob(data: ImageData): Promise<Blob> {
 
   const context = canvas.getContext("2d");
   if (!context) {
-    throw new Error("无法创建 canvas 上下文。");
+    throw new Error("The canvas 2d context is unavailable.");
   }
   context.putImageData(data, 0, 0);
 
   return await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
-      (blob) => (blob ? resolve(blob) : reject(new Error("导出 PNG 失败。"))),
+      (blob) => (blob ? resolve(blob) : reject(new Error("Encoding the PNG failed."))),
       "image/png",
     );
   });

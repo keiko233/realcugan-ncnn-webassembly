@@ -52,7 +52,7 @@ declare global {
 
 export function assertRealcuganModule(value: unknown): asserts value is RealcuganModule {
   if (typeof value !== "object" || value === null) {
-    throw new TypeError("Emscripten 模块初始化失败：返回值不是对象。");
+    throw new TypeError("The emscripten module did not resolve to an object.");
   }
 
   const candidate = value as Record<string, unknown>;
@@ -60,11 +60,11 @@ export function assertRealcuganModule(value: unknown): asserts value is Realcuga
 
   for (const name of requiredFunctions) {
     if (typeof candidate[name] !== "function") {
-      throw new TypeError(`Emscripten 模块缺少导出函数 ${name}。`);
+      throw new TypeError(`The emscripten module is missing the exported function ${name}.`);
     }
   }
 
   if (!(candidate.HEAPU8 instanceof Uint8Array)) {
-    throw new TypeError("Emscripten 模块缺少 HEAPU8 视图。");
+    throw new TypeError("The emscripten module is missing the HEAPU8 view.");
   }
 }

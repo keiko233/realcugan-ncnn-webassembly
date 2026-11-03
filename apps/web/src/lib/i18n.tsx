@@ -28,6 +28,12 @@ export const LOCALE_LABELS: Record<string, string> = {
   en: "English",
 };
 
+/** Compact endonym for the rail's language toggle. */
+export const LOCALE_SHORT: Record<string, string> = {
+  zh: "中",
+  en: "EN",
+};
+
 export function LocaleProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(() => getLocale());
 
@@ -52,6 +58,18 @@ export function useLocale(): LocaleContextValue {
     throw new Error("useLocale must be used inside <LocaleProvider>");
   }
   return context;
+}
+
+/**
+ * Re-renders the calling component whenever the locale changes.
+ *
+ * `m.*` resolves the locale at call time, so a component only shows the new
+ * language once it re-renders. TanStack Router memoises route components, so a
+ * provider at the shell level never reaches them: every route component has to
+ * subscribe here, which in turn re-renders its whole subtree.
+ */
+export function useLocaleSubscription(): Locale {
+  return useLocale().locale;
 }
 
 export type { Locale };
